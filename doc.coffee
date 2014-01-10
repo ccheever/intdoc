@@ -11,30 +11,50 @@ endsWith = (str, suffix) ->
   str.indexOf(suffix, str.length - suffix.length) isnt -1
 
 
-doc = (fn) ->
-  """Extracts the docstring and named params for a function if applicable
+doc = (val) ->
+  """Extracts as much documentation information from an object as possible
 
-    The docstring is determined by looking at .__doc__ and if that is 
-    set, using that. If that 
-    In a function definition, if the first token inside the function
-    body is a string literal, then that is the docstring; if the first
-    token is anything else, then the function is not considered to have
-    a docstring
+    The docstring is determined by looking at `.__doc__` and if that is 
+    set, using that.
+    If that is not found, then `.constructor.__doc__` is examined, and if 
+    that is not found, then the 
+
+    If none of those are set, then in a function definition, 
+    if the first token inside the function body is a string literal,
+    then that is the docstring; if the first token is anything else,
+    then the function is not considered to have a docstring.
 
     """
   
-  if objects.isUndefined fn
+  if objects.isUndefined val
     return { type: "undefined" }
-  if objects.isNull fn
+  if objects.isNull val
     return { type: "null" }
+  
 
   isNative = false
+  isFibrous = false
+  ty = typeof val
+  if ty?
+    ty = ty.charAt(0).toUpperCase() + ty.slice(1)
 
-  #if typeof fn is 'function'
-  if objects.isFunction fn
+  docString = null
+  if val.__doc__?
+      docString = val.__doc__.toString()
+    else
+      if val.constructor? and val.constructor.__doc__?
+        docString = val.constructor.__doc__.toString()
+
+  #if typeof val is 'function'
+  if objects.isFunction val
     # We need to wrap the function definition in parens so that the parser
     # treats it as an expression rather than a named function def
-    s = fn.toString()
+    if objects.isFunction val.__fibrousFn__
+      ty = "fibrous Function"
+      val = val.__fibrousFn__
+      isFibrous = true
+
+    s = val.toString()
     if endsWith s, ") { [native code] }"
       isNative = true
       docString = "[native code]"
@@ -47,31 +67,20 @@ doc = (fn) ->
 
     functionBodyParseTree = parseTree.body[0].expression.body.body
 
-    # If __doc__ is explicitly defined, use that, else infer it from the
-    # function's definition
-    if fn.__doc__?
-      docString = fn.__doc__.toString() # Ensure that we have a string
-    else
-      # Otherwise, use the first expression in the function body iff it is
+    if not docString?
+      # Use the first expression in the function body iff it is
       # a string literal; or else, there is no doc string for this function
-      docString ?= null
       if functionBodyParseTree.length
         first = functionBodyParseTree[0]
         if first.type == "ExpressionStatement" and first.expression.type == "Literal"
           docString = first.expression.value
   else
-    if fn.__doc__?
-      docString = fn.__doc__.toString()
-    else
-      docString = null
-
-  if fn.__name__?
-    name = fn.__name__
+     if val.__name__?
+    name = val.__name__
   else
-    name = fn.name
+    name = val.name
 
-  ty = typeof fn
-  if objects.isArray fn
+  if objects.isArray val
     ty = "Array"
   else
 
@@ -79,8 +88,11 @@ doc = (fn) ->
   if isNative
     info.nativeCode = isNative
 
-  if objects.isFunction fn
-    info.code = fn.toString()
+  if isFibrous
+    info.isFibrous = isFibrous
+
+  if objects.isFunction val
+    info.code = val.toString()
 
   info
 

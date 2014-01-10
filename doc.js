@@ -11,22 +11,32 @@
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
   };
 
-  doc = function(fn) {
-    "Extracts the docstring and named params for a function if applicable\n\nThe docstring is determined by looking at .__doc__ and if that is \nset, using that. If that \nIn a function definition, if the first token inside the function\nbody is a string literal, then that is the docstring; if the first\ntoken is anything else, then the function is not considered to have\na docstring\n";
-    var docString, first, functionBodyParseTree, info, isNative, name, params, parseTree, s, ty, x;
-    if (objects.isUndefined(fn)) {
+  doc = function(val) {
+    "Extracts as much documentation information from an object as possible\n\nThe docstring is determined by looking at `.__doc__` and if that is \nset, using that.\nIf that is not found, then `.constructor.__doc__` is examined, and if \nthat is not found, then the \n\nIf none of those are set, then in a function definition, \nif the first token inside the function body is a string literal,\nthen that is the docstring; if the first token is anything else,\nthen the function is not considered to have a docstring.\n";
+    var docString, first, functionBodyParseTree, info, isFibrous, isNative, name, params, parseTree, s, ty, x;
+    if (objects.isUndefined(val)) {
       return {
         type: "undefined"
       };
     }
-    if (objects.isNull(fn)) {
+    if (objects.isNull(val)) {
       return {
         type: "null"
       };
     }
     isNative = false;
-    if (objects.isFunction(fn)) {
-      s = fn.toString();
+    isFibrous = false;
+    ty = typeof val;
+    if (ty != null) {
+      ty = ty.charAt(0).toUpperCase() + ty.slice(1);
+    }
+    if (objects.isFunction(val)) {
+      if (objects.isFunction(val.__fibrousFn__)) {
+        ty = "fibrous Function";
+        val = val.__fibrousFn__;
+        isFibrous = true;
+      }
+      s = val.toString();
       if (endsWith(s, ") { [native code] }")) {
         isNative = true;
         docString = "[native code]";
@@ -44,33 +54,40 @@
         return _results;
       })();
       functionBodyParseTree = parseTree.body[0].expression.body.body;
-      if (fn.__doc__ != null) {
-        docString = fn.__doc__.toString();
+      if (val.__doc__ != null) {
+        docString = val.__doc__.toString();
       } else {
-        if (docString == null) {
-          docString = null;
-        }
-        if (functionBodyParseTree.length) {
-          first = functionBodyParseTree[0];
-          if (first.type === "ExpressionStatement" && first.expression.type === "Literal") {
-            docString = first.expression.value;
+        if ((val.constructor != null) && (val.constructor.__doc__ != null)) {
+          docString = val.constructor.__doc__.toString();
+        } else {
+          if (docString == null) {
+            docString = null;
+          }
+          if (functionBodyParseTree.length) {
+            first = functionBodyParseTree[0];
+            if (first.type === "ExpressionStatement" && first.expression.type === "Literal") {
+              docString = first.expression.value;
+            }
           }
         }
       }
     } else {
-      if (fn.__doc__ != null) {
-        docString = fn.__doc__.toString();
+      if (val.__doc__ != null) {
+        docString = val.__doc__.toString();
       } else {
-        docString = null;
+        if ((val.constructor != null) && (val.constructor.__doc__ != null)) {
+          docString = val.constructor.__doc__.toString();
+        } else {
+          docString = null;
+        }
       }
     }
-    if (fn.__name__ != null) {
-      name = fn.__name__;
+    if (val.__name__ != null) {
+      name = val.__name__;
     } else {
-      name = fn.name;
+      name = val.name;
     }
-    ty = typeof fn;
-    if (objects.isArray(fn)) {
+    if (objects.isArray(val)) {
       ty = "Array";
     } else {
 
@@ -84,8 +101,11 @@
     if (isNative) {
       info.nativeCode = isNative;
     }
-    if (objects.isFunction(fn)) {
-      info.code = fn.toString();
+    if (isFibrous) {
+      info.isFibrous = isFibrous;
+    }
+    if (objects.isFunction(val)) {
+      info.code = val.toString();
     }
     return info;
   };
