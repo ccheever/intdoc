@@ -75,10 +75,10 @@ doc = (val) ->
         if first.type == "ExpressionStatement" and first.expression.type == "Literal"
           docString = first.expression.value
   else
-     if val.__name__?
-    name = val.__name__
-  else
-    name = val.name
+    if val.__name__?
+      name = val.__name__
+    else
+      name = val.name
 
   if objects.isArray val
     ty = "Array"
