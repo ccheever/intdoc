@@ -3,8 +3,8 @@
 #
 ##
 
-esprima = require 'esprima'
-objects = require 'lodash-node/modern/objects'
+_ = require 'lodash-node'
+esprima = require 'esprima-fb'
 
 endsWith = (str, suffix) ->
   """Checks whether a given string ends with `suffix`"""
@@ -14,26 +14,27 @@ endsWith = (str, suffix) ->
 doc = (val) ->
   """Extracts as much documentation information from an object as possible
 
-    The docstring is determined by looking at `.__doc__` and if that is 
+    The docstring is determined by looking at `.__doc__` and if that is
     set, using that.
-    If that is not found, then `.constructor.__doc__` is examined, and if 
-    that is not found, then the 
+    If that is not found, then `.constructor.__doc__` is examined, and if
+    that is not found, then the
 
-    If none of those are set, then in a function definition, 
+    If none of those are set, then in a function definition,
     if the first token inside the function body is a string literal,
     then that is the docstring; if the first token is anything else,
     then the function is not considered to have a docstring.
 
     """
-  
-  if objects.isUndefined val
+
+  if _.isUndefined val
     return { type: "undefined" }
-  if objects.isNull val
+  if _.isNull val
     return { type: "null" }
-  
+
 
   isNative = false
   isFibrous = false
+  isCoWrapped = false
   ty = typeof val
   if ty?
     ty = ty.charAt(0).toUpperCase() + ty.slice(1)
@@ -46,13 +47,17 @@ doc = (val) ->
         docString = val.constructor.__doc__.toString()
 
   #if typeof val is 'function'
-  if objects.isFunction val
+  if _.isFunction val
     # We need to wrap the function definition in parens so that the parser
     # treats it as an expression rather than a named function def
-    if objects.isFunction val.__fibrousFn__
+    if _.isFunction val.__fibrousFn__
       ty = "fibrous Function"
       val = val.__fibrousFn__
       isFibrous = true
+    else if _.isFunction val.__generatorFunction__
+      ty = "co.wrap Function"
+      val = val.__generatorFunction__
+      isCoWrapped = true
 
     s = val.toString()
     if endsWith s, ") { [native code] }"
@@ -80,7 +85,7 @@ doc = (val) ->
     else
       name = val.name
 
-  if objects.isArray val
+  if _.isArray val
     ty = "Array"
   else
 
@@ -91,7 +96,10 @@ doc = (val) ->
   if isFibrous
     info.isFibrous = isFibrous
 
-  if objects.isFunction val
+  if isCoWrapped
+    info.isCoWrapped = isCoWrapped
+
+  if _.isFunction val
     info.code = val.toString()
 
   info
