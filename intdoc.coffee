@@ -1,13 +1,15 @@
-##
-# Extracts documentation for a function
-#
-##
+{
+  isArray
+  isFunction
+  isNull
+  isUndefined
 
-_ = require 'lodash-node'
+  } = require 'lodash-node'
 esprima = require 'esprima-fb'
 
 endsWith = (str, suffix) ->
   """Checks whether a given string ends with `suffix`"""
+
   str.indexOf(suffix, str.length - suffix.length) isnt -1
 
 
@@ -26,11 +28,10 @@ doc = (val) ->
 
     """
 
-  if _.isUndefined val
+  if isUndefined val
     return { type: "undefined" }
-  if _.isNull val
+  if isNull val
     return { type: "null" }
-
 
   isNative = false
   isFibrous = false
@@ -47,14 +48,14 @@ doc = (val) ->
         docString = val.constructor.__doc__.toString()
 
   #if typeof val is 'function'
-  if _.isFunction val
+  if isFunction val
     # We need to wrap the function definition in parens so that the parser
     # treats it as an expression rather than a named function def
-    if _.isFunction val.__fibrousFn__
+    if isFunction val.__fibrousFn__
       ty = "fibrous Function"
       val = val.__fibrousFn__
       isFibrous = true
-    else if _.isFunction val.__generatorFunction__
+    else if isFunction val.__generatorFunction__
       ty = "co.wrap Function"
       val = val.__generatorFunction__
       isCoWrapped = true
@@ -85,7 +86,7 @@ doc = (val) ->
     else
       name = val.name
 
-  if _.isArray val
+  if isArray val
     ty = "Array"
   else
 
@@ -99,7 +100,7 @@ doc = (val) ->
   if isCoWrapped
     info.isCoWrapped = isCoWrapped
 
-  if _.isFunction val
+  if isFunction val
     info.code = val.toString()
 
   info
