@@ -14,26 +14,27 @@ endsWith = (str, suffix) ->
 doc = (val) ->
   """Extracts as much documentation information from an object as possible
 
-    The docstring is determined by looking at `.__doc__` and if that is 
+    The docstring is determined by looking at `.__doc__` and if that is
     set, using that.
-    If that is not found, then `.constructor.__doc__` is examined, and if 
-    that is not found, then the 
+    If that is not found, then `.constructor.__doc__` is examined, and if
+    that is not found, then the
 
-    If none of those are set, then in a function definition, 
+    If none of those are set, then in a function definition,
     if the first token inside the function body is a string literal,
     then that is the docstring; if the first token is anything else,
     then the function is not considered to have a docstring.
 
     """
-  
+
   if objects.isUndefined val
     return { type: "undefined" }
   if objects.isNull val
     return { type: "null" }
-  
+
 
   isNative = false
   isFibrous = false
+  isCoWrapped = false
   ty = typeof val
   if ty?
     ty = ty.charAt(0).toUpperCase() + ty.slice(1)
@@ -53,6 +54,10 @@ doc = (val) ->
       ty = "fibrous Function"
       val = val.__fibrousFn__
       isFibrous = true
+    else if objects.isFunction val.__generatorFunction__
+      ty = "co.wrap Function"
+      val = val.__generatorFunction__
+      isCoWrapped = true
 
     s = val.toString()
     if endsWith s, ") { [native code] }"
@@ -90,6 +95,9 @@ doc = (val) ->
 
   if isFibrous
     info.isFibrous = isFibrous
+
+  if isCoWrapped
+    info.isCoWrapped = isCoWrapped
 
   if objects.isFunction val
     info.code = val.toString()
