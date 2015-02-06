@@ -13,15 +13,15 @@
 
   doc = function(val) {
     "Extracts as much documentation information from an object as possible\n\nThe docstring is determined by looking at `.__doc__` and if that is\nset, using that.\nIf that is not found, then `.constructor.__doc__` is examined, and if\nthat is not found, then the\n\nIf none of those are set, then in a function definition,\nif the first token inside the function body is a string literal,\nthen that is the docstring; if the first token is anything else,\nthen the function is not considered to have a docstring.\n";
-    var docString, first, functionBodyParseTree, info, isCoWrapped, isFibrous, isNative, name, params, parseTree, s, ty, x;
+    var docString, first, functionBodyParseTree, info, isCoWrapped, isFibrous, isNative, name, params, parseTree, s, ty, x, _ref1, _ref2;
     if (isUndefined(val)) {
       return {
-        type: "undefined"
+        type: 'Undefined'
       };
     }
     if (isNull(val)) {
       return {
-        type: "null"
+        type: 'Null'
       };
     }
     isNative = false;
@@ -41,11 +41,11 @@
     }
     if (isFunction(val)) {
       if (isFunction(val.__fibrousFn__)) {
-        ty = "fibrous Function";
+        ty = 'fibrous Function';
         val = val.__fibrousFn__;
         isFibrous = true;
       } else if (isFunction(val.__generatorFunction__)) {
-        ty = "co.wrap Function";
+        ty = 'co.wrap Function';
         val = val.__generatorFunction__;
         isCoWrapped = true;
       }
@@ -70,22 +70,15 @@
       if (docString == null) {
         if (functionBodyParseTree.length) {
           first = functionBodyParseTree[0];
-          if (first.type === "ExpressionStatement" && first.expression.type === "Literal") {
+          if (first.type === 'ExpressionStatement' && first.expression.type === 'Literal') {
             docString = first.expression.value;
           }
         }
       }
-    } else {
-      if (val.__name__ != null) {
-        name = val.__name__;
-      } else {
-        name = val.name;
-      }
     }
+    name = (_ref1 = (_ref2 = val.name) != null ? _ref2 : val.__name__) != null ? _ref1 : null;
     if (isArray(val)) {
-      ty = "Array";
-    } else {
-
+      ty = 'Array';
     }
     info = {
       params: params,

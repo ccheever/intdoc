@@ -3,7 +3,6 @@
   isFunction
   isNull
   isUndefined
-
   } = require 'lodash-node'
 esprima = require 'esprima-fb'
 
@@ -29,9 +28,9 @@ doc = (val) ->
     """
 
   if isUndefined val
-    return { type: "undefined" }
+    return { type: 'Undefined' }
   if isNull val
-    return { type: "null" }
+    return { type: 'Null' }
 
   isNative = false
   isFibrous = false
@@ -52,11 +51,11 @@ doc = (val) ->
     # We need to wrap the function definition in parens so that the parser
     # treats it as an expression rather than a named function def
     if isFunction val.__fibrousFn__
-      ty = "fibrous Function"
+      ty = 'fibrous Function'
       val = val.__fibrousFn__
       isFibrous = true
     else if isFunction val.__generatorFunction__
-      ty = "co.wrap Function"
+      ty = 'co.wrap Function'
       val = val.__generatorFunction__
       isCoWrapped = true
 
@@ -78,19 +77,16 @@ doc = (val) ->
       # a string literal; or else, there is no doc string for this function
       if functionBodyParseTree.length
         first = functionBodyParseTree[0]
-        if first.type == "ExpressionStatement" and first.expression.type == "Literal"
+        if first.type == 'ExpressionStatement' and first.expression.type == 'Literal'
           docString = first.expression.value
-  else
-    if val.__name__?
-      name = val.__name__
-    else
-      name = val.name
+
+  name = val.name ? val.__name__ ? null
 
   if isArray val
-    ty = "Array"
-  else
+    ty = 'Array'
 
   info = { params: params, doc: docString, name: name, type: ty }
+
   if isNative
     info.nativeCode = isNative
 
