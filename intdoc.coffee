@@ -11,6 +11,11 @@ endsWith = (str, suffix) ->
 
   str.indexOf(suffix, str.length - suffix.length) isnt -1
 
+startsWith = (str, prefix) ->
+  """Checks whether a given string starts with `prefix`"""
+
+  str[...prefix.length] == prefix
+
 
 doc = (val) ->
   """Extracts as much documentation information from an object as possible
@@ -65,6 +70,10 @@ doc = (val) ->
       docString = "[native code]"
       s = s.replace "[native code]", ""
 
+    if startsWith s, "function*"
+      isFunctionStar = true
+      ty = 'Function*'
+
     parseTree = esprima.parse "(#{ s })"
 
     # Extract the list of named parameters
@@ -92,6 +101,9 @@ doc = (val) ->
 
   if isFibrous
     info.isFibrous = isFibrous
+
+  if isFunctionStar
+    info.isFunctionStar = isFunctionStar
 
   if isCoWrapped
     info.isCoWrapped = isCoWrapped
