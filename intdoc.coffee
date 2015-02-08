@@ -40,6 +40,7 @@ doc = (val) ->
   isNative = false
   isFibrous = false
   isCoWrapped = false
+  actualVal = undefined
   ty = typeof val
   if ty?
     ty = ty.charAt(0).toUpperCase() + ty.slice(1)
@@ -57,12 +58,19 @@ doc = (val) ->
     # treats it as an expression rather than a named function def
     if isFunction val.__fibrousFn__
       ty = 'fibrous Function'
+      actualVal = val
       val = val.__fibrousFn__
       isFibrous = true
     else if isFunction val.__generatorFunction__
       ty = 'co.wrap Function'
+      actualVal = val
       val = val.__generatorFunction__
       isCoWrapped = true
+    else if isFunction val.___instapromiseOriginalFunction___
+      ty = 'instapromise Function'
+      actualVal = val
+      val = val.___instapromiseOriginalFunction___
+      isInstapromise = true
 
     s = val.toString()
     if endsWith s, ") { [native code] }"
@@ -108,8 +116,14 @@ doc = (val) ->
   if isCoWrapped
     info.isCoWrapped = isCoWrapped
 
+  if isInstapromise
+    info.isInstapromise = isInstapromise
+
   if isFunction val
     info.code = val.toString()
+
+  if actualVal?
+    info.actualVal = actualVal
 
   info
 

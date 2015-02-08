@@ -18,7 +18,7 @@
 
   doc = function(val) {
     "Extracts as much documentation information from an object as possible\n\nThe docstring is determined by looking at `.__doc__` and if that is\nset, using that.\nIf that is not found, then `.constructor.__doc__` is examined, and if\nthat is not found, then the\n\nIf none of those are set, then in a function definition,\nif the first token inside the function body is a string literal,\nthen that is the docstring; if the first token is anything else,\nthen the function is not considered to have a docstring.\n";
-    var docString, first, functionBodyParseTree, info, isCoWrapped, isFibrous, isFunctionStar, isNative, name, params, parseTree, s, ty, x, _ref1, _ref2;
+    var actualVal, docString, first, functionBodyParseTree, info, isCoWrapped, isFibrous, isFunctionStar, isInstapromise, isNative, name, params, parseTree, s, ty, x, _ref1, _ref2;
     if (isUndefined(val)) {
       return {
         type: 'Undefined'
@@ -32,6 +32,7 @@
     isNative = false;
     isFibrous = false;
     isCoWrapped = false;
+    actualVal = void 0;
     ty = typeof val;
     if (ty != null) {
       ty = ty.charAt(0).toUpperCase() + ty.slice(1);
@@ -47,12 +48,19 @@
     if (isFunction(val)) {
       if (isFunction(val.__fibrousFn__)) {
         ty = 'fibrous Function';
+        actualVal = val;
         val = val.__fibrousFn__;
         isFibrous = true;
       } else if (isFunction(val.__generatorFunction__)) {
         ty = 'co.wrap Function';
+        actualVal = val;
         val = val.__generatorFunction__;
         isCoWrapped = true;
+      } else if (isFunction(val.___instapromiseOriginalFunction___)) {
+        ty = 'instapromise Function';
+        actualVal = val;
+        val = val.___instapromiseOriginalFunction___;
+        isInstapromise = true;
       }
       s = val.toString();
       if (endsWith(s, ") { [native code] }")) {
@@ -107,8 +115,14 @@
     if (isCoWrapped) {
       info.isCoWrapped = isCoWrapped;
     }
+    if (isInstapromise) {
+      info.isInstapromise = isInstapromise;
+    }
     if (isFunction(val)) {
       info.code = val.toString();
+    }
+    if (actualVal != null) {
+      info.actualVal = actualVal;
     }
     return info;
   };
